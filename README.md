@@ -19,3 +19,7 @@ A sudoku puzzle is composed of a square 9x9 board divided into 3 rows and 3 colu
 
 ## How to use
 `TBD`
+
+---
+
+> Coded for the 1st assignment of "Foundations of Machine Learning" @ Ca' Foscari University 2022/2023
