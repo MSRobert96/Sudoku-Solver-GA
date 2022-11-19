@@ -1,12 +1,12 @@
 import numpy as np
 from numpy.random import random, choice, permutation
+import time
 
 GENES = {1,2,3,4,5,6,7,8,9}
 MAX_SCORE = 162
-POP_SIZE = 200
-MUT_RATE = 0.8
-ELITE_NUM = 10
-SEL_NUM = 50
+POP_SIZE = 2000
+MUT_RATE = 0.1
+ELITE_NUM = 50
 
 TEST_CASE = (
     '37. 5.. ..6'
@@ -61,15 +61,15 @@ class Individual:
 
 class Population:
     def __init__(self, base_genes):
-        self.individuals = []
-        self.initialize(base_genes)
+        self.base_genes = np.array(list(base_genes), dtype=int).reshape(9,9)
+        self.initialize()
         self.generation = 1
 
-    def initialize(self, base_genes):
-        genes = np.array(list(base_genes), dtype=int).reshape(9,9)
-        fixed_genes = genes > 0
+    def initialize(self):
+        fixed_genes = self.base_genes > 0
+        self.individuals = []
         for _ in range(POP_SIZE):
-            self.individuals.append(Individual(genes.copy(), fixed_genes, init=True))
+            self.individuals.append(Individual(self.base_genes.copy(), fixed_genes, init=True))
         self.calc_stats()
 
     def calc_stats(self):
@@ -77,6 +77,9 @@ class Population:
         self.tot_fitness = sum([i.fitness for i in self.individuals])
         self.avg_fitness = self.tot_fitness / POP_SIZE
         self.probs = [i.fitness / self.tot_fitness for i in self.individuals]
+
+    def get_fittest(self):
+        return sorted(self.individuals, key=lambda c: c.fitness, reverse=True)[0]
 
     def evolve(self):
         new_gen = [] + sorted(self.individuals, key=lambda c: c.fitness, reverse=True)[:ELITE_NUM]
@@ -92,22 +95,40 @@ class Population:
 
     def selection(self):
         '''Tournament Selection'''
-        # candidates = sorted(choice(self.individuals, SEL_NUM, replace=False).tolist(), key=lambda c: c.fitness, reverse=True)
-        candidates = np.random.choice(self.individuals, size=2, replace=True, p=self.probs)
+        candidates = sorted(choice(self.individuals, 20, replace=False).tolist(), key=lambda c: c.fitness, reverse=True)
         return candidates[0], candidates[1]
 
-    def get_fittest(self):
-        return sorted(self.individuals, key=lambda c: c.fitness, reverse=True)[0]
+    def solve(self):
+        max_fitness_age = 0
+        current_max = self.max_fitness
+
+        while(self.max_fitness < 1):
+            # local minimum safe net: re-initialiaze population if stuck
+            if max_fitness_age == 1000:
+                self.initialize()
+            self.evolve()
+            if self.max_fitness > current_max:
+                current_max = self.max_fitness
+                max_fitness_age = 0
+            else:
+                max_fitness_age += 1
+            print(self)
+        
+        return ''.join(self.get_fittest().genes.flatten().astype(str).tolist())
 
     def __str__(self):
         return 'Gen {}: avg {:.4f}, max {:.4f}'.format(self.generation, self.avg_fitness, self.max_fitness)
 
 
 if __name__ == '__main__':
-    print(TEST_CASE)
     p = Population(TEST_CASE)
+    time_start = time.monotonic_ns()
     print(p)
-    while(True):
-        p.evolve()
-        print(p)
-        print(p.get_fittest())
+    p.solve()
+    time_elapsed = time.monotonic_ns() - time_start
+    
+    print('Found solution:')
+    solution = p.get_fittest().genes
+    print(solution)
+
+    print(f'Elapsed time : {time_elapsed/1000000000:.5f} s')
