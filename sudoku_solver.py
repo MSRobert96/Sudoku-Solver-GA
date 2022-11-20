@@ -1,5 +1,5 @@
 '''
-This is a terminal wrapper for sudoku_solver_core.
+This is a terminal wrapper for sudoku_solver_ga.
 Use this if you want to use the program from terminal.
 '''
 
