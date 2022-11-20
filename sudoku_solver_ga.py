@@ -38,13 +38,14 @@ class Individual:
         '''Updates the fitness score of the individual'''
         score = 0
         # rows scores
-        score += sum([np.unique(col).size for col in self.genes.T])
+        for c in range(9):
+            score += (np.unique(self.genes[:,c], return_counts=True)[1] == 1).size
         # boxes scores
         for r,c in [(0,0),(0,3),(0,6),
                     (3,0),(3,3),(3,6),
                     (6,0),(6,3),(6,6)]:
-            score += np.unique(self.genes[r:r+3,c:c+3]).size
-        self.fitness = (score / MAX_SCORE) ** 10
+            score += (np.unique(self.genes[r:r+3,c:c+3], return_counts=True)[1] == 1).size
+        self.fitness = score / MAX_SCORE
     
     def crossover(self, partner):
         '''Create a child with a `partner`, with a random crossover point'''
@@ -96,7 +97,6 @@ class Population:
         self.max_fitness = max([i.fitness for i in self.individuals])
         self.tot_fitness = sum([i.fitness for i in self.individuals])
         self.avg_fitness = self.tot_fitness / POP_SIZE
-        self.probs = [i.fitness / self.tot_fitness for i in self.individuals]
 
     def get_fittest(self):
         '''Get the individual with higher `fitness` score'''
@@ -125,8 +125,9 @@ class Population:
         max_fitness_age = 0
         current_max = self.max_fitness
 
+        print(self)
         while(self.max_fitness < 1):
-            if max_fitness_age == 1000:
+            if max_fitness_age == 50:
                 # local maximum safe net: re-initialiaze population if stuck for too many iterations
                 self.initialize()
             self.evolve()
